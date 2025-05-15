@@ -7,6 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D # Para gráficos 3D
 import fac_LU # Importamos nuestro módulo refactorizado
 import nw_ray_relajacion # Para SOR/Gauss-Seidel
 import jacobi_method     # Para Jacobi/JOR
+import nw_ry_no_lineales_relajacion as newton_nl  # Para Newton-Raphson No Lineal
 
 class App:
     def __init__(self, root):
@@ -223,7 +224,7 @@ class App:
                 self.results_lu_text.insert(tk.END, "Matriz Triangular Superior U:\n")
                 self.results_lu_text.insert(tk.END, np.array2string(U, precision=4, suppress_small=True) + "\n\n")
                 self.results_lu_text.insert(tk.END, "Vector Solución x:\n")
-                self.results_lu_text.insert(tk.END, np.array2string(x, precision=4, suppress_small=True) + "\n")
+                self.results_lu_text.insert(tk.END, np.array2string(x, precision=10, suppress_small=True) + "\n")
 
         except ValueError:
             self.results_lu_text.insert(tk.END, "Error: Todos los valores de la matriz A y el vector b deben ser números válidos.\n")
@@ -235,12 +236,427 @@ class App:
         self.results_lu_text.config(state=tk.DISABLED)
 
     def open_newton_nl_window(self):
-        # Placeholder - Lógica para la ventana de Newton No Lineal irá aquí
-        newton_window = tk.Toplevel(self.root)
-        newton_window.title("Newton-Raphson (No Lineal)")
-        newton_window.geometry("600x400")
-        ttk.Label(newton_window, text="Interfaz para Newton No Lineal - EN CONSTRUCCIÓN").pack(pady=20, padx=20)
-        # print("Abrir ventana para Newton-Raphson No Lineal")
+        if hasattr(self, 'newton_nl_window') and self.newton_nl_window and self.newton_nl_window.winfo_exists():
+            self.newton_nl_window.lift()
+            return
+
+        self.newton_nl_window = tk.Toplevel(self.root)
+        self.newton_nl_window.title("Newton-Raphson (Sistemas No Lineales)")
+        self.newton_nl_window.geometry("850x750") # Ajustar tamaño para pestañas
+        self.newton_nl_window.protocol("WM_DELETE_WINDOW", lambda: self._close_window_generic(self.newton_nl_window, 'newton_nl_window'))
+
+        # Crear el Notebook (pestañas)
+        self.newton_nl_notebook = ttk.Notebook(self.newton_nl_window)
+        self.newton_nl_notebook.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+
+        # --- Pestaña 1: Configuración y Parámetros ---
+        config_params_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
+        self.newton_nl_notebook.add(config_params_frame, text='Configuración y Parámetros')
+        
+        # Frame para seleccionar tipo de sistema (dentro de la pestaña 1)
+        system_frame = ttk.LabelFrame(config_params_frame, text="Tipo de Sistema No Lineal")
+        system_frame.pack(pady=10, padx=10, fill='x')
+        
+        self.newton_nl_system_var = tk.StringVar(value="sistema_2x2")
+        ttk.Radiobutton(system_frame, text="Sistema 2x2 Estándar (predefinido)", 
+                        variable=self.newton_nl_system_var, value="sistema_2x2", command=self._toggle_newton_nl_input_mode).pack(anchor='w', padx=10, pady=2)
+        ttk.Radiobutton(system_frame, text="Sistema 2x2 Personalizado (ingresar texto)", 
+                        variable=self.newton_nl_system_var, value="personalizado_2x2", command=self._toggle_newton_nl_input_mode).pack(anchor='w', padx=10, pady=2)
+        
+        # Frame para la definición de funciones (personalizado) (dentro de la pestaña 1)
+        self.newton_custom_functions_frame = ttk.LabelFrame(config_params_frame, text="Definición de Funciones (Sistema Personalizado)")
+        self.newton_custom_functions_frame.pack(pady=10, padx=10, fill='x')
+
+        eq_entry_frame = ttk.Frame(self.newton_custom_functions_frame)
+        eq_entry_frame.pack(fill='x', pady=5)
+        ttk.Label(eq_entry_frame, text="F1(x,y) =").grid(row=0, column=0, padx=5, pady=2, sticky='w')
+        self.text_f1_eq = tk.Text(eq_entry_frame, height=2, width=60)
+        self.text_f1_eq.grid(row=0, column=1, padx=5, pady=2, sticky='ew')
+        ttk.Label(eq_entry_frame, text="F2(x,y) =").grid(row=1, column=0, padx=5, pady=2, sticky='w')
+        self.text_f2_eq = tk.Text(eq_entry_frame, height=2, width=60)
+        self.text_f2_eq.grid(row=1, column=1, padx=5, pady=2, sticky='ew')
+        eq_entry_frame.columnconfigure(1, weight=1)
+
+        jac_entry_frame = ttk.Frame(self.newton_custom_functions_frame)
+        jac_entry_frame.pack(fill='x', pady=5)
+        ttk.Label(jac_entry_frame, text="Jacobiano J(x,y):").grid(row=0, column=0, columnspan=4, padx=5, pady=5, sticky='w')
+        ttk.Label(jac_entry_frame, text="dF1/dx =").grid(row=1, column=0, padx=5, pady=2, sticky='w')
+        self.text_j11_eq = tk.Text(jac_entry_frame, height=2, width=25)
+        self.text_j11_eq.grid(row=1, column=1, padx=5, pady=2)
+        ttk.Label(jac_entry_frame, text="dF1/dy =").grid(row=1, column=2, padx=5, pady=2, sticky='w')
+        self.text_j12_eq = tk.Text(jac_entry_frame, height=2, width=25)
+        self.text_j12_eq.grid(row=1, column=3, padx=5, pady=2)
+        ttk.Label(jac_entry_frame, text="dF2/dx =").grid(row=2, column=0, padx=5, pady=2, sticky='w')
+        self.text_j21_eq = tk.Text(jac_entry_frame, height=2, width=25)
+        self.text_j21_eq.grid(row=2, column=1, padx=5, pady=2)
+        ttk.Label(jac_entry_frame, text="dF2/dy =").grid(row=2, column=2, padx=5, pady=2, sticky='w')
+        self.text_j22_eq = tk.Text(jac_entry_frame, height=2, width=25)
+        self.text_j22_eq.grid(row=2, column=3, padx=5, pady=2)
+        self.btn_fill_example_newton_nl = ttk.Button(self.newton_custom_functions_frame, text="Usar Ejemplo en Campos Personalizados", command=self._set_custom_system_values_from_example)
+        self.btn_fill_example_newton_nl.pack(pady=5)
+        
+        # Frame para los parámetros del método (dentro de la pestaña 1)
+        params_frame = ttk.LabelFrame(config_params_frame, text="Parámetros del Método")
+        params_frame.pack(pady=10, padx=10, fill='x')
+        init_frame = ttk.Frame(params_frame)
+        init_frame.pack(pady=5, fill='x')
+        ttk.Label(init_frame, text="Vector Inicial [x₀, y₀]:").pack(side=tk.LEFT, padx=5)
+        self.entry_x0_newton = ttk.Entry(init_frame, width=8); self.entry_x0_newton.pack(side=tk.LEFT, padx=5); self.entry_x0_newton.insert(0, "1.0")
+        self.entry_y0_newton = ttk.Entry(init_frame, width=8); self.entry_y0_newton.pack(side=tk.LEFT, padx=5); self.entry_y0_newton.insert(0, "1.0")
+        other_params_frame = ttk.Frame(params_frame)
+        other_params_frame.pack(pady=5, fill='x')
+        ttk.Label(other_params_frame, text="Tolerancia:").grid(row=0, column=0, padx=5, pady=2, sticky="w")
+        self.entry_tol_newton = ttk.Entry(other_params_frame, width=10); self.entry_tol_newton.grid(row=0, column=1, padx=5, pady=2); self.entry_tol_newton.insert(0, "1e-6")
+        ttk.Label(other_params_frame, text="Max. Iteraciones:").grid(row=0, column=2, padx=5, pady=2, sticky="w")
+        self.entry_max_iter_newton = ttk.Entry(other_params_frame, width=10); self.entry_max_iter_newton.grid(row=0, column=3, padx=5, pady=2); self.entry_max_iter_newton.insert(0, "100")
+        ttk.Label(other_params_frame, text="Factor Relajación (w):").grid(row=1, column=0, padx=5, pady=2, sticky="w")
+        self.entry_w_newton = ttk.Entry(other_params_frame, width=10); self.entry_w_newton.grid(row=1, column=1, padx=5, pady=2); self.entry_w_newton.insert(0, "1.0")
+        
+        # Botón para resolver (dentro de la pestaña 1)
+        ttk.Button(config_params_frame, text="Resolver Sistema No Lineal", 
+                  command=self.solve_newton_nl_system).pack(pady=20)
+
+        # --- Pestaña 2: Resultados Detallados ---
+        results_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
+        self.newton_nl_notebook.add(results_frame, text='Resultados Detallados')
+        
+        ttk.Label(results_frame, text="Resultados de la Solución:").pack(pady=5, anchor='w')
+        self.results_newton_text = tk.Text(results_frame, height=35, width=100, wrap=tk.WORD) # Ajustar tamaño según necesidad
+        self.results_newton_text.pack(pady=5, padx=5, fill=tk.BOTH, expand=True)
+        self.results_newton_text.config(state=tk.DISABLED)
+
+        # --- Pestaña 3: Resumen de Solución (NUEVA) ---
+        summary_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
+        self.newton_nl_notebook.add(summary_frame, text='Resumen de Solución')
+        
+        ttk.Label(summary_frame, text="Resumen de la Solución:").pack(pady=5, anchor='w')
+        self.summary_newton_text = tk.Text(summary_frame, height=15, width=100, wrap=tk.WORD, font=("Arial", 10)) # Ajustar tamaño y fuente
+        self.summary_newton_text.pack(pady=5, padx=5, fill=tk.BOTH, expand=True)
+        self.summary_newton_text.config(state=tk.DISABLED)
+
+        # --- Pestaña 4: Visualización (anteriormente Pestaña 3) ---
+        plot_tab_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
+        self.newton_nl_notebook.add(plot_tab_frame, text='Visualización')
+        
+        self.newton_plot_frame = ttk.LabelFrame(plot_tab_frame, text="Gráfico del Sistema y Convergencia")
+        self.newton_plot_frame.pack(pady=10, padx=10, fill='both', expand=True)
+        
+        # Inicializar estado de los campos de entrada personalizados
+        self._toggle_newton_nl_input_mode()
+
+    def _toggle_newton_nl_input_mode(self):
+        widgets_to_toggle = [
+            self.text_f1_eq, self.text_f2_eq,
+            self.text_j11_eq, self.text_j12_eq,
+            self.text_j21_eq, self.text_j22_eq,
+            self.btn_fill_example_newton_nl
+        ]
+
+        if self.newton_nl_system_var.get() == "personalizado_2x2":
+            new_state = tk.NORMAL
+            # Si se cambia a personalizado y los campos están vacíos, llenarlos con el ejemplo.
+            # Esto puede ser útil para el usuario.
+            is_any_field_filled = any(w.get("1.0", tk.END).strip() for w in widgets_to_toggle if isinstance(w, tk.Text))
+            if not is_any_field_filled:
+                 self._set_custom_system_values_from_example()
+
+        else: # "sistema_2x2" (estándar)
+            new_state = tk.DISABLED
+        
+        for widget in widgets_to_toggle:
+            if widget: # Asegurarse que el widget existe
+                widget.configure(state=new_state)
+    
+    def _set_custom_system_values_from_example(self):
+        """Establece los valores del sistema de ejemplo en los campos de texto personalizados."""
+        # Sistema estándar: x**2 + xy - 10 = 0, y + 3xy**2 - 57 = 0
+        # Las expresiones para eval DEBEN ser solo la parte izquierda.
+        default_f1 = "x**2 + x*y - 10"
+        default_f2 = "y + 3*x*y**2 - 57"
+        default_j11 = "2*x + y"
+        default_j12 = "x"
+        default_j21 = "3*y**2"
+        default_j22 = "1 + 6*x*y"
+
+        self.text_f1_eq.delete("1.0", tk.END); self.text_f1_eq.insert("1.0", default_f1)
+        self.text_f2_eq.delete("1.0", tk.END); self.text_f2_eq.insert("1.0", default_f2)
+        self.text_j11_eq.delete("1.0", tk.END); self.text_j11_eq.insert("1.0", default_j11)
+        self.text_j12_eq.delete("1.0", tk.END); self.text_j12_eq.insert("1.0", default_j12)
+        self.text_j21_eq.delete("1.0", tk.END); self.text_j21_eq.insert("1.0", default_j21)
+        self.text_j22_eq.delete("1.0", tk.END); self.text_j22_eq.insert("1.0", default_j22)
+
+    def _set_default_system_values(self):
+        """Este método está obsoleto y su funcionalidad ha sido reemplazada.
+           Se deja vacío para evitar errores si es llamado accidentalmente.
+        """
+        pass # No hacer nada.
+
+    def solve_newton_nl_system(self):
+        # Usar una comprobación más genérica para la ventana de Newton NL
+        if not self.newton_nl_window or not self.newton_nl_window.winfo_exists():
+            return
+            
+        self._clear_text_widget(self.results_newton_text)
+        self._clear_text_widget(self.summary_newton_text) # Limpiar también la nueva pestaña de resumen
+        
+        try:
+            # Leer parámetros del método
+            x0 = float(self.entry_x0_newton.get())
+            y0 = float(self.entry_y0_newton.get())
+            tol = float(self.entry_tol_newton.get())
+            max_iter = int(self.entry_max_iter_newton.get())
+            w_factor = float(self.entry_w_newton.get())
+            
+            # Vector inicial
+            x_inicial = np.array([x0, y0])
+            
+            F_to_solve = None
+            J_to_solve = None
+            F_for_plot = None 
+
+            if self.newton_nl_system_var.get() == "sistema_2x2":
+                # print("DEBUG: Usando sistema estándar") 
+                F_to_solve = newton_nl.ejemplo_F_sistema_2x2
+                J_to_solve = newton_nl.ejemplo_J_sistema_2x2
+                F_for_plot = newton_nl.ejemplo_F_sistema_2x2 
+            elif self.newton_nl_system_var.get() == "personalizado_2x2": 
+                # print("DEBUG: Usando sistema personalizado") 
+                f1_str = self.text_f1_eq.get("1.0", tk.END).strip()
+                f2_str = self.text_f2_eq.get("1.0", tk.END).strip()
+                j11_str = self.text_j11_eq.get("1.0", tk.END).strip()
+                j12_str = self.text_j12_eq.get("1.0", tk.END).strip()
+                j21_str = self.text_j21_eq.get("1.0", tk.END).strip()
+                j22_str = self.text_j22_eq.get("1.0", tk.END).strip()
+
+                if not all([f1_str, f2_str, j11_str, j12_str, j21_str, j22_str]):
+                    error_msg = "Error: Todas las funciones y derivadas deben ser ingresadas para el sistema personalizado."
+                    self._show_error_in_text(self.results_newton_text, error_msg)
+                    self._show_error_in_text(self.summary_newton_text, error_msg)
+                    return
+
+                safe_globals = {"np": np, "__builtins__": {}}
+                math_funcs = {name: getattr(np, name) for name in dir(np) if isinstance(getattr(np, name), np.ufunc)}
+                safe_globals.update(math_funcs)
+
+                def F_custom(vec):
+                    x, y = vec
+                    local_env = {"x": x, "y": y}
+                    f1 = eval(f1_str, safe_globals, local_env)
+                    f2 = eval(f2_str, safe_globals, local_env)
+                    return np.array([f1, f2])
+
+                def J_custom(vec):
+                    x, y = vec
+                    local_env = {"x": x, "y": y}
+                    j11 = eval(j11_str, safe_globals, local_env)
+                    j12 = eval(j12_str, safe_globals, local_env)
+                    j21 = eval(j21_str, safe_globals, local_env)
+                    j22 = eval(j22_str, safe_globals, local_env)
+                    return np.array([[j11, j12], [j21, j22]])
+                
+                F_to_solve = F_custom
+                J_to_solve = J_custom
+                F_for_plot = F_custom 
+            else:
+                error_msg = "Error: Tipo de sistema no reconocido."
+                self._show_error_in_text(self.results_newton_text, error_msg)
+                self._show_error_in_text(self.summary_newton_text, error_msg)
+                return
+
+            if not F_to_solve or not J_to_solve or not F_for_plot:
+                error_msg = "Error: No se pudieron definir las funciones para resolver."
+                self._show_error_in_text(self.results_newton_text, error_msg)
+                self._show_error_in_text(self.summary_newton_text, error_msg)
+                return
+            
+            resultado = newton_nl.resolver_sistema_newton_raphson(
+                F_to_solve,
+                J_to_solve,
+                x_inicial,
+                tol,
+                max_iter,
+                w_factor
+            )
+            
+            # --- Poblar Pestaña de Resumen ---
+            summary_content = ""
+            if isinstance(resultado, str): # Error del backend
+                summary_content = resultado
+                self._show_error_in_text(self.results_newton_text, resultado) # También en detallado
+            elif isinstance(resultado, dict):
+                status = resultado.get('status', 'N/A')
+                solucion = resultado.get('solucion')
+                iter_realizadas = resultado.get('iteraciones_realizadas', 'N/A')
+                norma_final = resultado.get('norma_residuo_final', float('inf'))
+
+                summary_content += f"Estado: {status}\n"
+                if solucion is not None:
+                    summary_content += f"Solución final (x, y): [{solucion[0]:.10f}, {solucion[1]:.10f}]\n"
+                else:
+                    summary_content += "Solución final: No disponible\n"
+                summary_content += f"Iteraciones realizadas: {iter_realizadas}\n"
+                summary_content += f"Norma del residuo final ||F(x_k)||: {norma_final:.4e}\n"
+            else:
+                summary_content = "Error: Tipo de resultado inesperado del backend."
+                self._show_error_in_text(self.results_newton_text, summary_content) # También en detallado
+            
+            self._insert_text_in_widget(self.summary_newton_text, summary_content)
+
+            # --- Poblar Pestaña de Resultados Detallados ---
+            if isinstance(resultado, dict) and 'historial_iteraciones' in resultado:
+                detailed_content = "--- Historial Detallado de Iteraciones ---\n\n"
+                hist = resultado['historial_iteraciones']
+                
+                for item in hist:
+                    # Inicialización defensiva para evitar NameError si la asignación de abajo falla
+                    # o si hay un flujo inesperado, o si item no es un dict.
+                    norm_delta_x_val = None
+
+                    iter_num = item['iter']
+                    norm_res = item['norma_residuo']
+                    x_k_val = item.get('x_k')
+                    fx_k_val = item.get('Fx_k')
+                    delta_k_val = item.get('delta_k')
+                    jx_k_val = item.get('Jx_k')
+                    
+                    # Obtener norma_delta_x de forma segura
+                    if isinstance(item, dict):
+                        norm_delta_x_val = item.get('norma_delta_x')
+                    # Si item no es un dict, norm_delta_x_val permanece None (de la inicialización)
+
+                    detailed_content += f"--- Iteración {iter_num} ---\n"
+                    
+                    if x_k_val is not None:
+                        detailed_content += "Vector x_k (punto de inicio de esta iteración):\n" + np.array2string(x_k_val, precision=10, suppress_small=True, separator=', ') + "\n"
+                    else:
+                        detailed_content += "Vector x_k: N/A\n"
+                    
+                    if fx_k_val is not None:
+                        detailed_content += "Valor de F(x_k):\n" + np.array2string(fx_k_val, precision=10, suppress_small=True, separator=', ') + "\n"
+                    else:
+                        detailed_content += "Valor de F(x_k): N/A\n"
+                        
+                    detailed_content += f"Norma del residuo ||F(x_k)||: {norm_res:.4e}\n"
+
+                    if jx_k_val is not None:
+                        detailed_content += "Jacobiano J(x_k):\n" + np.array2string(jx_k_val, precision=5, suppress_small=True, separator=', ') + "\n" # Precisión 5 para Jacobiano
+                    else:
+                        detailed_content += "Jacobiano J(x_k): N/A\n"
+                        
+                    if delta_k_val is not None:
+                        detailed_content += "Paso delta_k:\n" + np.array2string(delta_k_val, precision=10, suppress_small=True, separator=', ') + "\n"
+                    else:
+                        detailed_content += "Paso delta_k: N/A\n"
+                    
+                    if norm_delta_x_val is not None:
+                        detailed_content += f"Norma del cambio ||x_{{k+1}} - x_k||: {norm_delta_x_val:.4e}\n" # x_{k+1} se calcula después de aplicar delta_k
+                    else:
+                        if iter_num == 0:
+                             detailed_content += f"Norma del cambio ||x_{{k+1}} - x_k||: N/A (iteración inicial)\n"
+                        else:
+                             detailed_content += f"Norma del cambio ||x_{{k+1}} - x_k||: No calculada/Error\n"
+                    
+                    # Calcular y mostrar x_{k+1}
+                    # Necesitamos el w_factor de la GUI para este cálculo.
+                    try:
+                        w_factor_gui = float(self.entry_w_newton.get()) 
+                    except ValueError:
+                        w_factor_gui = 1.0 # Default si la entrada es inválida, aunque el backend usa el suyo.
+                                           # Esto es solo para visualización aquí.
+
+                    if x_k_val is not None and delta_k_val is not None:
+                        x_k_siguiente = x_k_val + w_factor_gui * delta_k_val
+                        detailed_content += "Vector x_{k+1} (resultado de esta iteración):\n" + np.array2string(x_k_siguiente, precision=10, suppress_small=True, separator=', ') + "\n"
+                    else:
+                        if iter_num > 0: # No mostrar para iteración 0 si no hay delta
+                            detailed_content += "Vector x_{k+1} (resultado de esta iteración): No calculable (falta x_k o delta_k)\n"
+
+                    detailed_content += "------------------------------------\n\n"
+                
+                self._insert_text_in_widget(self.results_newton_text, detailed_content)
+                
+                if F_for_plot and resultado.get('solucion') is not None: 
+                    self._plot_newton_system(F_for_plot, resultado['solucion'], hist)
+            elif not isinstance(resultado, str): # Si no es un error de string y no hay historial
+                 self._insert_text_in_widget(self.results_newton_text, "No hay historial detallado disponible.")
+                
+        except AttributeError as e_attr:
+            error_msg = f"Error de Atributo: {str(e_attr)}"
+            self._show_error_in_text(self.results_newton_text, error_msg)
+            self._show_error_in_text(self.summary_newton_text, error_msg)
+        except ValueError as e_val: # Capturar explícitamente errores de conversión de float/int
+            error_msg = f"Error de valor en parámetros de entrada: {str(e_val)}\\nAsegúrese que Tolerancia, Max. Iteraciones, Relajación y Vector Inicial sean números válidos."
+            self._show_error_in_text(self.results_newton_text, error_msg)
+            self._show_error_in_text(self.summary_newton_text, error_msg)
+        except Exception as e:
+            error_msg = f"Error inesperado: {str(e)}"
+            self._show_error_in_text(self.results_newton_text, error_msg)
+            self._show_error_in_text(self.summary_newton_text, error_msg)
+        finally:
+            if hasattr(self, 'results_newton_text') and self.results_newton_text and self.results_newton_text.winfo_exists():
+                self.results_newton_text.config(state=tk.DISABLED)
+            if hasattr(self, 'summary_newton_text') and self.summary_newton_text and self.summary_newton_text.winfo_exists():
+                self.summary_newton_text.config(state=tk.DISABLED)
+
+    def _plot_newton_system(self, F_func, solucion, historial):
+        # print("DEBUG: Entrando a _plot_newton_system") 
+        # Limpiar el frame de visualización
+        for widget in self.newton_plot_frame.winfo_children():
+            widget.destroy()
+        
+        # Crear figura y ejes
+        fig = plt.Figure(figsize=(8, 6), dpi=100)
+        ax = fig.add_subplot(111)
+        
+        x_min, x_max = solucion[0] - 2, solucion[0] + 2
+        y_min, y_max = solucion[1] - 2, solucion[1] + 2
+        
+        # Renombrar para mayor claridad y evitar conflictos de nombres si los hubiera
+        x_grid_vals = np.linspace(x_min, x_max, 100)
+        y_grid_vals = np.linspace(y_min, y_max, 100)
+        X, Y = np.meshgrid(x_grid_vals, y_grid_vals)
+        
+        Z = np.zeros((len(y_grid_vals), len(x_grid_vals), 2))
+        for i in range(len(y_grid_vals)):
+            for j in range(len(x_grid_vals)):
+                Z[i, j] = F_func(np.array([X[i, j], Y[i, j]]))
+        
+        # Graficar curvas de nivel para F1(x,y) = 0 y F2(x,y) = 0
+        # Se elimina el argumento 'label' ya que no es usado por contour para la leyenda.
+        ax.contour(X, Y, Z[:,:,0], levels=[0], colors='blue')
+        ax.contour(X, Y, Z[:,:,1], levels=[0], colors='red')
+        
+        # Artistas proxy para la leyenda de las curvas de nivel
+        ax.plot([], [], color='blue', lw=2, label='F1(x,y) = 0')
+        ax.plot([], [], color='red', lw=2, label='F2(x,y) = 0')
+
+        # Graficar la trayectoria de convergencia
+        if len(historial) > 1: 
+            x_points = [item['x_k'][0] for item in historial if item.get('x_k') is not None]
+            y_points = [item['x_k'][1] for item in historial if item.get('x_k') is not None]
+            if x_points and y_points: # Asegurarse que hay puntos para graficar
+                ax.plot(x_points, y_points, 'g-o', markersize=4, label='Trayectoria')
+        
+        # Marcar la solución
+        ax.plot(solucion[0], solucion[1], 'ko', markersize=8, label='Solución')
+        
+        # Configurar gráfica
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_title('Sistema No Lineal y Convergencia')
+        ax.legend()
+        ax.grid(True)
+        
+        # Crear canvas para mostrar la figura
+        canvas = FigureCanvasTkAgg(fig, master=self.newton_plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        self.newton_plot_canvas = canvas # Corregido: Guardar referencia para el plot de Newton
+
+        # # Opcional: Barra de herramientas
+        # toolbar = NavigationToolbar2Tk(canvas, target_frame)
+        # toolbar.update()
+        # canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     def open_sor_window(self):
         if self.sor_window and self.sor_window.winfo_exists(): self.sor_window.lift(); return
@@ -539,7 +955,7 @@ class App:
                 else:
                     P, L, U, x = resultado_lu
                     solution_x = x # Guardar la solución para el plot
-                    text = f"Factorización LU Exitosa:\n\nMatriz P:\n{np.array2string(P, precision=4, suppress_small=True)}\n\nL:\n{np.array2string(L, precision=4, suppress_small=True)}\n\nU:\n{np.array2string(U, precision=4, suppress_small=True)}\n\nSolución x:\n{np.array2string(x, precision=6, suppress_small=True)}"
+                    text = f"Factorización LU Exitosa:\n\nMatriz P:\n{np.array2string(P, precision=4, suppress_small=True)}\n\nL:\n{np.array2string(L, precision=4, suppress_small=True)}\n\nU:\n{np.array2string(U, precision=4, suppress_small=True)}\n\nSolución x:\n{np.array2string(x, precision=10, suppress_small=True)}"
                     self._insert_text_in_widget(self.compare_results_text_lu, text)
                     self.compare_results_text_lu.config(state=tk.DISABLED)
             except Exception as e_lu: self._show_error_in_text(self.compare_results_text_lu, f"Error ejecutando LU: {e_lu}")
@@ -761,7 +1177,7 @@ class App:
         elif isinstance(resultado, dict):
             summary = (
                 f"Estado: {resultado.get('status', 'N/A')}\n\n"
-                f"Solución final x:\n{np.array2string(resultado.get('solucion', np.array([])), precision=6, suppress_small=True)}\n\n"
+                f"Solución final x:\n{np.array2string(resultado.get('solucion', np.array([])), precision=10, suppress_small=True)}\n\n"
                 f"Iteraciones realizadas: {resultado.get('iteraciones_realizadas', 'N/A')}\n"
                 f"Norma final del residuo: {resultado.get('norma_residuo_final', float('inf')):.2e}\n\n"
                 "--- Historial de Iteraciones ---\n"
@@ -779,7 +1195,7 @@ class App:
                     iter_num = item.get('iter', '-')
                     norm_res = item.get('norma_residuo', float('nan'))
                     x_k_vec = item.get('x_k', np.array([]))
-                    x_k_str_oneline = ' '.join(np.array2string(x_k_vec, precision=5, suppress_small=True, separator=', ').replace('\n', '').split())
+                    x_k_str_oneline = ' '.join(np.array2string(x_k_vec, precision=10, suppress_small=True, separator=', ').replace('\n', '').split())
                     line = f"{iter_num:<5} | {norm_res:<15.4e} | {x_k_str_oneline}\n"
                     full_message += line
         else:

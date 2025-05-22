@@ -17,8 +17,8 @@ def construir_piramide(x, y):
             xa = x[i + j]
             xb = x[i]
 
-            numerador = f"({a:.4f} - {b:.4f})"
-            denominador = f"({xa} - {xb})"
+            numerador = f"[({a:.2f}) - ({b:.2f})]"
+            denominador = f"[({xa}) - ({xb})]"
             formula = f"{numerador} / {denominador}"
 
             tabla_valores[i][j] = (a - b) / (xa - xb)
@@ -29,14 +29,16 @@ def construir_piramide(x, y):
 def imprimir_piramide(tabla):
     n = tabla.shape[0]
     for i in range(n):
-        fila = [f"{tabla[i][j]:>10.4f} |" for j in range(n - i)]
+        fila = [f"{tabla[i][j]:>10.2f} |" for j in range(n - i)]
         print(" ".join(fila))
+    print("\n")
 
 def imprimir_piramide_formulas(tabla):
     n = len(tabla)
     for i in range(n):
-        fila = [f"{tabla[i][j]:>30} |" for j in range(n - i)]
+        fila = [f"{tabla[i][j]:>40} |" for j in range(n - i)]
         print(" ".join(fila))
+    print("\n")
 
 def obtener_coeficientes(tabla):
     # Los coeficientes del polinomio de Newton son la primera fila de cada columna

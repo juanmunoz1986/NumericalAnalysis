@@ -3,8 +3,7 @@ from tkinter import ttk
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #, NavigationToolbar2Tk
-from methods import fac_LU, jacobi_method, nw_ry_no_lineales_relajacion as newton_nl
-from app.methods import nw_ray_relajacion
+from app.methods import fac_LU, jacobi_method, nw_ry_no_lineales_relajacion as newton_nl
 
 
 class App:

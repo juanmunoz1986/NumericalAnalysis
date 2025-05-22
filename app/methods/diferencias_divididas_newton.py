@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 def construir_piramide(x, y):
     n = len(x)
@@ -27,16 +26,9 @@ def construir_piramide(x, y):
     return tabla_valores,tabla_formulas
 
 def imprimir_piramide(tabla):
-    n = tabla.shape[0]
-    for i in range(n):
-        fila = [f"{tabla[i][j]:>10.2f} |" for j in range(n - i)]
-        print(" ".join(fila))
-    print("\n")
-
-def imprimir_piramide_formulas(tabla):
     n = len(tabla)
     for i in range(n):
-        fila = [f"{tabla[i][j]:>40} |" for j in range(n - i)]
+        fila = [f"{tabla[i][j]:>40} |" for j in range(n+1)]
         print(" ".join(fila))
     print("\n")
 
@@ -52,18 +44,21 @@ def evaluar_newton(x, coef, x_eval):
     return result
 
 # Datos de entrada
-x = [-2, -1, 0, 2, 3, 6]
-y = [-18, -5, -2, -2, 7, 142]
+x = np.array([-2, -1, 0, 2, 3, 6])
+y = np.array([-18, -5, -2, -2, 7, 142])
 
 # Construir pirámide
 valores, formulas = construir_piramide(x, y)
+
+valores = np.hstack((x.reshape(-1,1),valores))
+formulas = np.hstack((x.reshape(-1,1), formulas))
 
 print("Pirámide de diferencias divididas valores:")
 imprimir_piramide(valores)
 
 
 print("Pirámide de diferencias divididas formulas:")
-imprimir_piramide_formulas(formulas)
+imprimir_piramide(formulas)
 
 # Obtener coeficientes desde la pirámide
 coeficientes = obtener_coeficientes(valores)

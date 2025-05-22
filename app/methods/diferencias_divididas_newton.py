@@ -29,7 +29,13 @@ def construir_piramide(x, y):
 def imprimir_piramide(tabla):
     n = tabla.shape[0]
     for i in range(n):
-        fila = [f"{tabla[i][j]:>10.4f}" for j in range(n - i)]
+        fila = [f"{tabla[i][j]:>10.4f} |" for j in range(n - i)]
+        print(" ".join(fila))
+
+def imprimir_piramide_formulas(tabla):
+    n = len(tabla)
+    for i in range(n):
+        fila = [f"{tabla[i][j]:>30} |" for j in range(n - i)]
         print(" ".join(fila))
 
 def obtener_coeficientes(tabla):
@@ -50,8 +56,12 @@ y = [-18, -5, -2, -2, 7, 142]
 # Construir pirámide
 valores, formulas = construir_piramide(x, y)
 
-print("Pirámide de diferencias divididas:")
+print("Pirámide de diferencias divididas valores:")
 imprimir_piramide(valores)
+
+
+print("Pirámide de diferencias divididas formulas:")
+imprimir_piramide_formulas(formulas)
 
 # Obtener coeficientes desde la pirámide
 coeficientes = obtener_coeficientes(valores)

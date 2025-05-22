@@ -3,11 +3,9 @@ from tkinter import ttk
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #, NavigationToolbar2Tk
-from mpl_toolkits.mplot3d import Axes3D # Para gráficos 3D
-import fac_LU # Importamos nuestro módulo refactorizado
-import nw_ray_relajacion # Para SOR/Gauss-Seidel
-import jacobi_method     # Para Jacobi/JOR
-import nw_ry_no_lineales_relajacion as newton_nl  # Para Newton-Raphson No Lineal
+from methods import fac_LU, jacobi_method, nw_ry_no_lineales_relajacion as newton_nl
+from app.methods import nw_ray_relajacion
+
 
 class App:
     def __init__(self, root):

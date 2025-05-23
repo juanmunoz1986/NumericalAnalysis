@@ -186,7 +186,7 @@ def ejemplo_J_sistema_2x2(vec):
 
 # Código de prueba que se ejecuta solo si se llama directamente a este archivo
 if __name__ == '__main__':
-    print("Probando el módulo nw_ray_relajacion.py (Newton-Raphson para sistemas no lineales)...")
+    print("Probando el módulo newton_raphson_with_relaxation.py (Newton-Raphson para sistemas no lineales)...")
     
     # Parámetros de prueba
     x_inicial = np.array([1.0, 1.0])

@@ -57,7 +57,7 @@ pip install numpy matplotlib
 4.  Ejecuta el archivo principal de la interfaz gráfica:
 
     ```bash
-    python main_gui.py
+    python main.py
     ```
 
 Esto abrirá la ventana principal de la aplicación, desde donde podrás seleccionar y utilizar los diferentes métodos numéricos.

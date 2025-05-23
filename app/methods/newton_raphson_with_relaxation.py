@@ -115,7 +115,7 @@ def resolver_sistema_sor(A_np, b_np, w_factor, tol, max_iter, x_inicial_np=None)
     }
 
 if __name__ == '__main__':
-    print("Probando el módulo nw_ray_relajacion.py (Gauss-Seidel/SOR)...")
+    print("Probando el módulo newton_raphson_with_relaxation.py (Gauss-Seidel/SOR)...")
     # Matriz diagonalmente dominante para asegurar convergencia de Gauss-Seidel
     A_test = np.array([[4.0, -1.0, 1.0],
                        [-1.0, 4.0, -2.0],

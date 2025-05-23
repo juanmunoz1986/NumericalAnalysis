@@ -131,7 +131,7 @@ def resolver_sistema_jacobi(A_np, b_np, tol, max_iter, x_inicial_np=None):
     }
 
 if __name__ == '__main__':
-    print("Probando el módulo jacobi_method.py (Jacobi Clásico)...")
+    print("Probando el módulo interactive_jacboi.py (Jacobi Clásico)...")
     A_test = np.array([[4.0, -1.0, 1.0],
                        [-1.0, 4.0, -2.0],
                        [1.0, -2.0, 4.0]], dtype=float)

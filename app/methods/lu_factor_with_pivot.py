@@ -59,9 +59,9 @@ def resolver_sistema_lu(A_np, b_np):
     return P, L, U, x
 
 # El siguiente código es para probar el módulo directamente si se ejecuta este archivo.
-# No se ejecutará cuando se importe desde main_gui.py
+# No se ejecutará cuando se importe desde main.py
 if __name__ == '__main__':
-    print("Probando el módulo fac_LU.py...")
+    print("Probando el módulo lu_factor_with_pivot.py...")
     # Ejemplo de uso:
     A_test = np.array([[2, -3, 1],
                        [-4, 9,  2],

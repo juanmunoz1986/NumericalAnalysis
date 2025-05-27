@@ -71,7 +71,7 @@ imprimir_piramide(formulas)
 # Obtener coeficientes
 coeficientes = obtener_coeficientes(valores)
 print("\nCoeficientes del polinomio de Newton:")
-print(coeficientes)
+print(np.array(coeficientes))
 
 # Evaluar polinomio
 x_val = 5

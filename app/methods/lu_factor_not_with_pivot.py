@@ -74,7 +74,7 @@ def resolver_sistema_lu(A_np, b_np, usar_pivoteo=False):
 
 
 # Código de prueba
-if __name__ == '__main__':
+if __name__ == '__main__': 
     print("Probando el módulo con y sin pivoteo...\n")
 
     A_test = np.array([[2, -3, 1],

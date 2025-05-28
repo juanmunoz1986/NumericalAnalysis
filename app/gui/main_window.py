@@ -3,15 +3,9 @@ from tkinter import ttk
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # , NavigationToolbar2Tk
-from app.methods import (
-    difference_numeric as numeric_diff,
-    divided_newton_differences as divided_newton,
-    interactive_jacboi as jacobi_iter,
-    lu_factor_not_with_pivot as lu_no_pivot,
-    lu_factor_with_pivot as lu_with_pivot,
-    newton_raphson_with_relaxation as newton_relaxed,
-    newton_raphson_not_line_relaxation as newton_classic
-)
+from app.methods.root_finding import lu_factorization_with_pivot as lu_with_pivot, interactive_jacboi as jacobi_iter, \
+    newton_raphson_no_line_relaxation as newton_classic, newton_raphson_with_relaxation as newton_relaxed
+
 
 class App:
     def __init__(self, root):

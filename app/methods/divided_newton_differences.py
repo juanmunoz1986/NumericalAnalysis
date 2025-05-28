@@ -56,8 +56,8 @@ def evaluar_newton(x, coef, x_eval):
     return result
 
 # Datos de entrada
-x = np.array([-2, -1, 0, 2, 3, 6])
-y = np.array([-18, -5, -2, -2, 7, 142])
+x = np.array([0,0.5,1,1.5,2])
+y = np.array([0,2.5,5.8,8.5,10.2])
 
 # Construir pirámides
 valores, formulas = construir_piramide(x, y)

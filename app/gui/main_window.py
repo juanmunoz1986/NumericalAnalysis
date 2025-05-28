@@ -3,8 +3,15 @@ from tkinter import ttk
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # , NavigationToolbar2Tk
-from app.methods import lu_factor_with_pivot, interactive_jacboi, newton_raphson_not_line_relaxation as newton_nl
-
+from app.methods import (
+    difference_numeric as numeric_diff,
+    divided_newton_differences as divided_newton,
+    interactive_jacboi as jacobi_iter,
+    lu_factor_not_with_pivot as lu_no_pivot,
+    lu_factor_with_pivot as lu_with_pivot,
+    newton_raphson_with_relaxation as newton_relaxed,
+    newton_raphson_not_line_relaxation as newton_classic
+)
 
 class App:
     def __init__(self, root):
@@ -24,9 +31,9 @@ class App:
         btn_jacobi = ttk.Button(self.root, text="Jacobi Clásico (Sist. Lineales)", command=self.open_jacobi_window)
         btn_jacobi.pack(pady=5, fill='x', padx=50)
 
-        btn_newton_nl = ttk.Button(self.root, text="Newton-Raphson (Sist. No Lineales)",
-                                   command=self.open_newton_nl_window)
-        btn_newton_nl.pack(pady=5, fill='x', padx=50)
+        btn_newton_classic = ttk.Button(self.root, text="Newton-Raphson (Sist. No Lineales)",
+                                   command=self.open_newton_classic_window)
+        btn_newton_classic.pack(pady=5, fill='x', padx=50)
 
         separator = ttk.Separator(self.root, orient='horizontal')
         separator.pack(pady=10, fill='x', padx=20)
@@ -214,7 +221,7 @@ class App:
             A_np = np.array(matrix_A_list, dtype=float)
             b_np = np.array(vector_b_list, dtype=float)
 
-            resultado = fac_LU.resolver_sistema_lu(A_np, b_np)
+            resultado = lu_with_pivot.resolver_sistema_lu(A_np, b_np)
 
             if isinstance(resultado, str):
                 self.results_lu_text.insert(tk.END, resultado + "\n")
@@ -241,36 +248,36 @@ class App:
 
         self.results_lu_text.config(state=tk.DISABLED)
 
-    def open_newton_nl_window(self):
-        if hasattr(self, 'newton_nl_window') and self.newton_nl_window and self.newton_nl_window.winfo_exists():
-            self.newton_nl_window.lift()
+    def open_newton_classic_window(self):
+        if hasattr(self, 'newton_classic_window') and self.newton_classic_window and self.newton_classic_window.winfo_exists():
+            self.newton_classic_window.lift()
             return
 
-        self.newton_nl_window = tk.Toplevel(self.root)
-        self.newton_nl_window.title("Newton-Raphson (Sistemas No Lineales)")
-        self.newton_nl_window.geometry("850x750")  # Ajustar tamaño para pestañas
-        self.newton_nl_window.protocol("WM_DELETE_WINDOW",
-                                       lambda: self._close_window_generic(self.newton_nl_window, 'newton_nl_window'))
+        self.newton_classic_window = tk.Toplevel(self.root)
+        self.newton_classic_window.title("Newton-Raphson (Sistemas No Lineales)")
+        self.newton_classic_window.geometry("850x750")  # Ajustar tamaño para pestañas
+        self.newton_classic_window.protocol("WM_DELETE_WINDOW",
+                                       lambda: self._close_window_generic(self.newton_classic_window, 'newton_classic_window'))
 
         # Crear el Notebook (pestañas)
-        self.newton_nl_notebook = ttk.Notebook(self.newton_nl_window)
-        self.newton_nl_notebook.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+        self.newton_classic_notebook = ttk.Notebook(self.newton_classic_window)
+        self.newton_classic_notebook.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
 
         # --- Pestaña 1: Configuración y Parámetros ---
-        config_params_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
-        self.newton_nl_notebook.add(config_params_frame, text='Configuración y Parámetros')
+        config_params_frame = ttk.Frame(self.newton_classic_notebook, padding=10)
+        self.newton_classic_notebook.add(config_params_frame, text='Configuración y Parámetros')
 
         # Frame para seleccionar tipo de sistema (dentro de la pestaña 1)
         system_frame = ttk.LabelFrame(config_params_frame, text="Tipo de Sistema No Lineal")
         system_frame.pack(pady=10, padx=10, fill='x')
 
-        self.newton_nl_system_var = tk.StringVar(value="sistema_2x2")
+        self.newton_classic_system_var = tk.StringVar(value="sistema_2x2")
         ttk.Radiobutton(system_frame, text="Sistema 2x2 Estándar (predefinido)",
-                        variable=self.newton_nl_system_var, value="sistema_2x2",
-                        command=self._toggle_newton_nl_input_mode).pack(anchor='w', padx=10, pady=2)
+                        variable=self.newton_classic_system_var, value="sistema_2x2",
+                        command=self._toggle_newton_classic_input_mode).pack(anchor='w', padx=10, pady=2)
         ttk.Radiobutton(system_frame, text="Sistema 2x2 Personalizado (ingresar texto)",
-                        variable=self.newton_nl_system_var, value="personalizado_2x2",
-                        command=self._toggle_newton_nl_input_mode).pack(anchor='w', padx=10, pady=2)
+                        variable=self.newton_classic_system_var, value="personalizado_2x2",
+                        command=self._toggle_newton_classic_input_mode).pack(anchor='w', padx=10, pady=2)
 
         # Frame para la definición de funciones (personalizado) (dentro de la pestaña 1)
         self.newton_custom_functions_frame = ttk.LabelFrame(config_params_frame,
@@ -303,10 +310,10 @@ class App:
         ttk.Label(jac_entry_frame, text="dF2/dy =").grid(row=2, column=2, padx=5, pady=2, sticky='w')
         self.text_j22_eq = tk.Text(jac_entry_frame, height=2, width=25)
         self.text_j22_eq.grid(row=2, column=3, padx=5, pady=2)
-        self.btn_fill_example_newton_nl = ttk.Button(self.newton_custom_functions_frame,
+        self.btn_fill_example_newton_classic = ttk.Button(self.newton_custom_functions_frame,
                                                      text="Usar Ejemplo en Campos Personalizados",
                                                      command=self._set_custom_system_values_from_example)
-        self.btn_fill_example_newton_nl.pack(pady=5)
+        self.btn_fill_example_newton_classic.pack(pady=5)
 
         # Frame para los parámetros del método (dentro de la pestaña 1)
         params_frame = ttk.LabelFrame(config_params_frame, text="Parámetros del Método")
@@ -337,11 +344,11 @@ class App:
 
         # Botón para resolver (dentro de la pestaña 1)
         ttk.Button(config_params_frame, text="Resolver Sistema No Lineal",
-                   command=self.solve_newton_nl_system).pack(pady=20)
+                   command=self.solve_newton_classic_system).pack(pady=20)
 
         # --- Pestaña 2: Resultados Detallados ---
-        results_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
-        self.newton_nl_notebook.add(results_frame, text='Resultados Detallados')
+        results_frame = ttk.Frame(self.newton_classic_notebook, padding=10)
+        self.newton_classic_notebook.add(results_frame, text='Resultados Detallados')
 
         ttk.Label(results_frame, text="Resultados de la Solución:").pack(pady=5, anchor='w')
         self.results_newton_text = tk.Text(results_frame, height=35, width=100,
@@ -350,8 +357,8 @@ class App:
         self.results_newton_text.config(state=tk.DISABLED)
 
         # --- Pestaña 3: Resumen de Solución (NUEVA) ---
-        summary_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
-        self.newton_nl_notebook.add(summary_frame, text='Resumen de Solución')
+        summary_frame = ttk.Frame(self.newton_classic_notebook, padding=10)
+        self.newton_classic_notebook.add(summary_frame, text='Resumen de Solución')
 
         ttk.Label(summary_frame, text="Resumen de la Solución:").pack(pady=5, anchor='w')
         self.summary_newton_text = tk.Text(summary_frame, height=15, width=100, wrap=tk.WORD,
@@ -360,24 +367,24 @@ class App:
         self.summary_newton_text.config(state=tk.DISABLED)
 
         # --- Pestaña 4: Visualización (anteriormente Pestaña 3) ---
-        plot_tab_frame = ttk.Frame(self.newton_nl_notebook, padding=10)
-        self.newton_nl_notebook.add(plot_tab_frame, text='Visualización')
+        plot_tab_frame = ttk.Frame(self.newton_classic_notebook, padding=10)
+        self.newton_classic_notebook.add(plot_tab_frame, text='Visualización')
 
         self.newton_plot_frame = ttk.LabelFrame(plot_tab_frame, text="Gráfico del Sistema y Convergencia")
         self.newton_plot_frame.pack(pady=10, padx=10, fill='both', expand=True)
 
         # Inicializar estado de los campos de entrada personalizados
-        self._toggle_newton_nl_input_mode()
+        self._toggle_newton_classic_input_mode()
 
-    def _toggle_newton_nl_input_mode(self):
+    def _toggle_newton_classic_input_mode(self):
         widgets_to_toggle = [
             self.text_f1_eq, self.text_f2_eq,
             self.text_j11_eq, self.text_j12_eq,
             self.text_j21_eq, self.text_j22_eq,
-            self.btn_fill_example_newton_nl
+            self.btn_fill_example_newton_classic
         ]
 
-        if self.newton_nl_system_var.get() == "personalizado_2x2":
+        if self.newton_classic_system_var.get() == "personalizado_2x2":
             new_state = tk.NORMAL
             # Si se cambia a personalizado y los campos están vacíos, llenarlos con el ejemplo.
             # Esto puede ser útil para el usuario.
@@ -422,9 +429,9 @@ class App:
         """
         pass  # No hacer nada.
 
-    def solve_newton_nl_system(self):
+    def solve_newton_classic_system(self):
         # Usar una comprobación más genérica para la ventana de Newton NL
-        if not self.newton_nl_window or not self.newton_nl_window.winfo_exists():
+        if not self.newton_classic_window or not self.newton_classic_window.winfo_exists():
             return
 
         self._clear_text_widget(self.results_newton_text)
@@ -445,12 +452,12 @@ class App:
             J_to_solve = None
             F_for_plot = None
 
-            if self.newton_nl_system_var.get() == "sistema_2x2":
+            if self.newton_classic_system_var.get() == "sistema_2x2":
                 # print("DEBUG: Usando sistema estándar")
-                F_to_solve = newton_nl.ejemplo_F_sistema_2x2
-                J_to_solve = newton_nl.ejemplo_J_sistema_2x2
-                F_for_plot = newton_nl.ejemplo_F_sistema_2x2
-            elif self.newton_nl_system_var.get() == "personalizado_2x2":
+                F_to_solve = newton_classic.ejemplo_F_sistema_2x2
+                J_to_solve = newton_classic.ejemplo_J_sistema_2x2
+                F_for_plot = newton_classic.ejemplo_F_sistema_2x2
+            elif self.newton_classic_system_var.get() == "personalizado_2x2":
                 # print("DEBUG: Usando sistema personalizado")
                 f1_str = self.text_f1_eq.get("1.0", tk.END).strip()
                 f2_str = self.text_f2_eq.get("1.0", tk.END).strip()
@@ -500,7 +507,7 @@ class App:
                 self._show_error_in_text(self.summary_newton_text, error_msg)
                 return
 
-            resultado = newton_nl.resolver_sistema_newton_raphson(
+            resultado = newton_classic.resolver_sistema_newton_raphson(
                 F_to_solve,
                 J_to_solve,
                 x_inicial,
@@ -814,7 +821,7 @@ class App:
             w = float(self.entry_w_sor.get());
             tol = float(self.entry_tol_sor.get());
             max_iter = int(self.entry_max_iter_sor.get())
-            resultado = nw_ray_relajacion.resolver_sistema_sor(A_np, b_np, w, tol, max_iter, x_inicial_np=x0_np)
+            resultado = newton_relaxed.resolver_sistema_sor(A_np, b_np, w, tol, max_iter, x_inicial_np=x0_np)
             self._display_iterative_results(self.results_sor_text, resultado, self.sor_matrix_size,
                                             append_summary=False)
         except ValueError:
@@ -935,12 +942,12 @@ class App:
             tol = float(self.entry_tol_jacobi.get());
             max_iter = int(self.entry_max_iter_jacobi.get())
             dominance_message = ""
-            if interactive_jacboi.verificar_dominancia_diagonal(A_np):
+            if jacobi_iter.verificar_dominancia_diagonal(A_np):
                 dominance_message = "Información: La matriz ES estrictamente diagonal dominante.\nSe espera buena convergencia para Jacobi.\n---\n"
             else:
                 dominance_message = "ADVERTENCIA: La matriz NO es estrictamente diagonal dominante.\nJacobi podría no converger o hacerlo lentamente.\n---\n"
             self._insert_text_in_widget(self.results_jacobi_text, dominance_message, append=False)
-            resultado = interactive_jacboi.resolver_sistema_jacobi(A_np, b_np, tol, max_iter, x_inicial_np=x0_np)
+            resultado = jacobi_iter.resolver_sistema_jacobi(A_np, b_np, tol, max_iter, x_inicial_np=x0_np)
             self._display_iterative_results(self.results_jacobi_text, resultado, self.jacobi_matrix_size,
                                             append_summary=True)
         except ValueError:
@@ -1090,13 +1097,13 @@ class App:
 
             # --- Ejecución LU (y guardar solución si éxito) ---
             try:
-                resultado_lu = lu_factor_with_pivot.resolver_sistema_lu(A_np, b_np)
+                resultado_lu = lu_with_pivot.resolver_sistema_lu(A_np, b_np)
                 if isinstance(resultado_lu, str):
                     self._show_error_in_text(self.compare_results_text_lu, resultado_lu)
                 else:
-                    P, L, U, x = resultado_lu
+                    P, L, U, x, y = resultado_lu
                     solution_x = x  # Guardar la solución para el plot
-                    text = f"Factorización LU Exitosa:\n\nMatriz P:\n{np.array2string(P, precision=4, suppress_small=True)}\n\nL:\n{np.array2string(L, precision=4, suppress_small=True)}\n\nU:\n{np.array2string(U, precision=4, suppress_small=True)}\n\nSolución x:\n{np.array2string(x, precision=10, suppress_small=True)}"
+                    text = f"Factorización LU Exitosa:\n\nMatriz P:\n{np.array2string(P, precision=4, suppress_small=True)}\n\nL:\n{np.array2string(L, precision=4, suppress_small=True)}\n\nU:\n{np.array2string(U, precision=4, suppress_small=True)}\n\ny:{np.array2string(y, precision=10, suppress_small=True)}\n\nSolución x:\n{np.array2string(x, precision=10, suppress_small=True)}"
                     self._insert_text_in_widget(self.compare_results_text_lu, text)
                     self.compare_results_text_lu.config(state=tk.DISABLED)
             except Exception as e_lu:
@@ -1105,10 +1112,10 @@ class App:
             # --- Ejecución Jacobi ---
             try:
                 dominance_message = "ADVERTENCIA: Matriz NO es estrictamente diagonal dominante.\n---\n"
-                if jacobi_method.verificar_dominancia_diagonal(
+                if jacobi_iter.verificar_dominancia_diagonal(
                     A_np): dominance_message = "Información: Matriz ES estrictamente diagonal dominante.\n---\n"
                 self._insert_text_in_widget(self.compare_results_text_jacobi, dominance_message, append=False)
-                resultado_jacobi = interactive_jacboi.resolver_sistema_jacobi(A_np, b_np, tol, max_iter, x_inicial_np=x0_np)
+                resultado_jacobi = jacobi_iter.resolver_sistema_jacobi(A_np, b_np, tol, max_iter, x_inicial_np=x0_np)
                 self._display_iterative_results(self.compare_results_text_jacobi, resultado_jacobi,
                                                 self.compare_matrix_size, append_summary=True)
             except Exception as e_jacobi:
@@ -1116,7 +1123,7 @@ class App:
 
             # --- Ejecución SOR ---
             try:
-                resultado_sor = nw_ray_relajacion.resolver_sistema_sor(A_np, b_np, w_sor, tol, max_iter,
+                resultado_sor = newton_relaxed.resolver_sistema_sor(A_np, b_np, w_sor, tol, max_iter,
                                                                        x_inicial_np=x0_np)
                 self._display_iterative_results(self.compare_results_text_sor, resultado_sor, self.compare_matrix_size,
                                                 append_summary=False)

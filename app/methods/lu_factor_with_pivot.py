@@ -56,7 +56,7 @@ def resolver_sistema_lu(A_np, b_np):
     except ValueError as e:
         return f"Error de dimensiones en sustitución hacia atrás: {str(e)}"
 
-    return P, L, U, x
+    return P, L, U, x, y
 
 # El siguiente código es para probar el módulo directamente si se ejecuta este archivo.
 # No se ejecutará cuando se importe desde main.py

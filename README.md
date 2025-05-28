@@ -1,76 +1,135 @@
-# Proyecto de Métodos Numéricos con Interfaz Gráfica
+# Proyecto de Métodos Numéricos con Interfaz Gráfica (Tkinter)
 
-Este proyecto implementa varios métodos numéricos para resolver sistemas de ecuaciones lineales y no lineales, junto con una interfaz gráfica de usuario (GUI) construida con Tkinter en Python.
+Este proyecto académico tiene como objetivo ofrecer una herramienta interactiva y educativa que permita visualizar y aplicar distintos **métodos numéricos** para la solución de **sistemas de ecuaciones lineales y no lineales**, a través de una interfaz gráfica desarrollada en **Tkinter**.
 
-## Características
+## 🎯 Objetivos
 
-El proyecto permite a los usuarios ingresar los parámetros necesarios para cada método y visualiza los resultados, incluyendo, en algunos casos, representaciones gráficas de la convergencia o del sistema de ecuaciones.
+* Implementar y comparar métodos numéricos clásicos utilizados en álgebra lineal y análisis numérico.
+* Desarrollar una interfaz gráfica amigable que facilite el uso de estos métodos sin requerir conocimientos avanzados de programación.
+* Fomentar la comprensión visual de la convergencia y comportamiento de los métodos iterativos.
+* Servir como herramienta educativa para estudiantes y docentes de ingeniería o ciencias afines.
 
-### Métodos Implementados:
+---
 
-1.  **Factorización LU (Sistemas Lineales)**:
-    *   Resuelve sistemas de ecuaciones lineales Ax = b mediante la descomposición LU de la matriz A (con pivotaje parcial P).
-    *   Muestra las matrices P, L, U y el vector solución x.
+## 📦 Estructura del Proyecto
 
-2.  **Gauss-Seidel / SOR (Sistemas Lineales Iterativo)**:
-    *   Resuelve sistemas lineales Ax = b utilizando el método iterativo de Gauss-Seidel o su variante con Sobre-Relajación Sucesiva (SOR).
-    *   El usuario puede especificar la matriz A, el vector b, el vector inicial x0, el factor de relajación w (para SOR), la tolerancia y el número máximo de iteraciones.
-    *   Muestra el historial de iteraciones.
+```
+E:.
+│   main.py                 → Archivo principal para ejecutar la GUI
+│   requirements            → Dependencias del proyecto
+│   README.md               → Este archivo
+│
+├───app
+│   │   __init__.py
+│   │
+│   ├───gui
+│   │   main_window.py      → Ventana principal y lógica de la interfaz Tkinter
+│   │   __init__.py
+│   │
+│   ├───methods
+│   │   ├───interpolation
+│   │   │   finite_differences.py         → Método de diferencias finitas
+│   │   │   newton_divided_differences.py → Método de Newton por diferencias divididas
+│   │   │   __init__.py
+│   │   │
+│   │   ├───root_finding
+│   │   │   interactive_jacboi.py                → Método de Jacobi iterativo
+│   │   │   lu_factorization_no_pivot.py         → Factorización LU sin pivoteo
+│   │   │   lu_factorization_with_pivot.py       → Factorización LU con pivoteo parcial
+│   │   │   newton_raphson_no_line_relaxation.py → Newton-Raphson sin relajación
+│   │   │   newton_raphson_with_relaxation.py    → Newton-Raphson con relajación
+│   │   │   __init__.py
+│   │
+│   ├───utils
+│   │   __init__.py         → Funciones auxiliares (si las hay)
+│
+└───.idea                   → Configuración del entorno de desarrollo (PyCharm)
+```
 
-3.  **Jacobi Clásico (Sistemas Lineales Iterativo)**:
-    *   Resuelve sistemas lineales Ax = b utilizando el método iterativo de Jacobi.
-    *   El usuario puede especificar la matriz A, el vector b, el vector inicial x0, la tolerancia y el número máximo de iteraciones.
-    *   Verifica la dominancia diagonal de la matriz A.
-    *   Muestra el historial de iteraciones.
+---
 
-4.  **Newton-Raphson (Sistemas No Lineales)**:
-    *   Resuelve sistemas de dos ecuaciones no lineales F(x) = 0.
-    *   Permite al usuario definir las funciones F1(x,y), F2(x,y) y las componentes de su matriz Jacobiana J(x,y) como expresiones de texto.
-    *   También incluye un sistema de ejemplo predefinido.
-    *   El usuario especifica el vector inicial, la tolerancia, el máximo de iteraciones y un factor de relajación.
-    *   Muestra un resumen de la solución (estado, solución, iteraciones, norma del residuo).
-    *   Muestra un historial detallado de cada iteración (x_k, F(x_k), J(x_k), delta_k, norma del residuo, norma del cambio en x).
-    *   Proporciona una visualización gráfica de las curvas de nivel F1=0, F2=0 y la trayectoria de convergencia de la solución.
+## 🧮 Métodos Numéricos Implementados
 
-5.  **Comparación de Métodos Lineales**:
-    *   Permite ingresar un sistema lineal y resolverlo simultáneamente por Factorización LU, Jacobi y Gauss-Seidel/SOR.
-    *   Muestra los resultados de cada método en pestañas separadas.
-    *   Incluye una pestaña de visualización que, para sistemas 2x2, grafica las dos ecuaciones y la solución, y para sistemas 3x3, intenta graficar los planos y la solución.
+### 📌 Sistemas de Ecuaciones Lineales
 
-## Requisitos
+1. **Factorización LU (con/sin pivoteo)**
 
-*   Python 3.x
-*   NumPy
-*   Matplotlib
-*   Tkinter (generalmente incluido con las instalaciones estándar de Python)
+   * Descompone la matriz A en L y U para resolver Ax = b.
+   * Incluye visualización de matrices P, L, U y solución final x.
 
-Se recomienda instalar las bibliotecas necesarias usando pip:
+2. **Método de Jacobi**
+
+   * Iterativo, requiere condición de dominancia diagonal.
+   * Muestra historial completo de iteraciones.
+
+3. **Método de Gauss-Seidel y SOR (relajación)**
+
+   * Versión iterativa mejorada.
+   * Permite modificar el parámetro de relajación w.
+   * Muestra evolución paso a paso.
+
+### 📌 Sistemas de Ecuaciones No Lineales
+
+4. **Método de Newton-Raphson para sistemas 2x2**
+
+   * Permite ingresar funciones F1(x, y), F2(x, y) y la matriz Jacobiana.
+   * Visualiza curvas de nivel y trayectoria de convergencia.
+   * Muestra resumen y detalles de iteraciones (normas, residuo, etc.).
+
+### 📌 Comparación de Métodos
+
+5. **Comparador de métodos lineales**
+
+   * Resuelve el mismo sistema usando LU, Jacobi y Gauss-Seidel/SOR.
+   * Visualiza resultados y, si es posible (2x2 o 3x3), grafica las soluciones.
+
+---
+
+## 🖥️ Requisitos
+
+* Python 3.x
+* Bibliotecas necesarias:
+
+  * `numpy`
+  * `matplotlib`
+  * `tkinter` (incluida por defecto en la mayoría de instalaciones de Python)
+
+Instalación rápida:
+
 ```bash
 pip install numpy matplotlib
 ```
 
-## Cómo Ejecutar el Proyecto
+---
 
-1.  Asegúrate de tener Python y las bibliotecas requeridas instaladas.
-2.  Clona este repositorio o descarga los archivos del proyecto en una carpeta local.
-3.  Navega a la carpeta del proyecto en tu terminal.
-4.  Ejecuta el archivo principal de la interfaz gráfica:
+## 🚀 Cómo Ejecutar la Aplicación
 
-    ```bash
-    python main.py
-    ```
+1. Clona este repositorio o descarga los archivos:
 
-Esto abrirá la ventana principal de la aplicación, desde donde podrás seleccionar y utilizar los diferentes métodos numéricos.
+   ```bash
+   git clone https://github.com/juanmunoz1986/numericalanalysis.git
+   ```
 
-## Estructura de Archivos
+2. Asegúrate de tener Python instalado y las bibliotecas requeridas.
 
-*   `main_gui.py`: Contiene la lógica de la interfaz gráfica principal de Tkinter y la coordinación entre la GUI y los módulos de los métodos numéricos.
-*   `fac_LU.py`: Implementación del método de Factorización LU.
-*   `jacobi_method.py`: Implementación del método de Jacobi.
-*   `nw_ray_relajacion.py`: Implementación del método de Gauss-Seidel / SOR.
-*   `nw_ry_no_lineales_relajacion.py`: Implementación del método de Newton-Raphson para sistemas no lineales.
-*   `README.md`: Este archivo.
+3. Abre una terminal o CMD, navega a la carpeta del proyecto y ejecuta:
 
-## Contribuciones
+   ```bash
+   python main.py
+   ```
 
-Este proyecto fue desarrollado con el objetivo de proporcionar herramientas educativas para la comprensión de métodos numéricos. 
+4. Se abrirá una ventana gráfica donde podrás seleccionar y utilizar los métodos numéricos.
+
+---
+
+## 🧠 Uso del Proyecto
+
+* Cada método cuenta con un formulario donde el usuario puede ingresar los datos requeridos (matriz A, vector b, tolerancia, iteraciones, etc.).
+* Al ejecutar el método, se muestran los resultados detallados y gráficos, si aplica.
+* La interfaz fue diseñada para ser intuitiva y flexible, facilitando tanto la exploración como el aprendizaje de los métodos.
+
+---
+
+## 👨‍💻 Créditos
+
+Este proyecto fue desarrollado como parte del curso de **Métodos Numéricos** con fines académicos, para aplicar conocimientos en Python, análisis numérico y diseño de interfaces gráficas.

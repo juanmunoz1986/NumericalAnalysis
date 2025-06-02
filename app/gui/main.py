@@ -220,7 +220,8 @@ class RootFindingApp:
             if isinstance(resultado, str):
                 self.results_lu_text.insert(tk.END, resultado + "\n")
             else:
-                P, L, U, x = resultado
+                # Corregir el desempaquetado para esperar 5 valores (P, L, U, x, y)
+                P, L, U, x, y = resultado # y es el vector intermedio de Ly = Pb
                 self.results_lu_text.insert(tk.END, "Factorización LU Exitosa:\n\n")
                 self.results_lu_text.insert(tk.END, "Matriz de Permutación P:\n")
                 self.results_lu_text.insert(tk.END, np.array2string(P, precision=4, suppress_small=True) + "\n\n")
@@ -228,7 +229,9 @@ class RootFindingApp:
                 self.results_lu_text.insert(tk.END, np.array2string(L, precision=4, suppress_small=True) + "\n\n")
                 self.results_lu_text.insert(tk.END, "Matriz Triangular Superior U:\n")
                 self.results_lu_text.insert(tk.END, np.array2string(U, precision=4, suppress_small=True) + "\n\n")
-                self.results_lu_text.insert(tk.END, "Vector Solución x:\n")
+                self.results_lu_text.insert(tk.END, "Vector Intermedio y (solución de Ly = Pb):\n")
+                self.results_lu_text.insert(tk.END, np.array2string(y, precision=10, suppress_small=True) + "\n\n")
+                self.results_lu_text.insert(tk.END, "Vector Solución x (solución de Ux = y):\n")
                 self.results_lu_text.insert(tk.END, np.array2string(x, precision=10, suppress_small=True) + "\n")
 
         except ValueError:

@@ -7,17 +7,17 @@ from app.methods.root_finding import lu_factorization_with_pivot as lu_with_pivo
     newton_raphson_no_line_relaxation as newton_classic, newton_raphson_with_relaxation as newton_relaxed
 
 
-class App:
+class RootFindingApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Proyecto de Métodos Numéricos")
-        self.root.geometry("450x420")  # Más alto para el nuevo botón
+        self.root.title("Proyecto de Métodos Numéricos - Búsqueda de Raíces")
+        self.root.geometry("450x420")
 
         title_label = ttk.Label(self.root, text="Seleccione un Método Numérico", font=("Arial", 16))
         title_label.pack(pady=15)
 
         btn_lu = ttk.Button(self.root, text="Factorización LU (Sistemas Lineales)", command=self.open_lu_window)
-        btn_lu.pack(pady=5, fill='x', padx=50)  # Menos pady
+        btn_lu.pack(pady=5, fill='x', padx=50)
 
         btn_sor = ttk.Button(self.root, text="Gauss-Seidel / SOR (Sist. Lineales)", command=self.open_sor_window)
         btn_sor.pack(pady=5, fill='x', padx=50)

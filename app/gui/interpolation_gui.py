@@ -5,6 +5,7 @@ import numpy as np
 # Importar los módulos de backend de interpolación
 from app.methods.interpolation import finite_differences
 from app.methods.interpolation import newton_divided_differences
+from app.methods.interpolation import data_resampling
 
 class InterpolationApp:
     def __init__(self, root):
@@ -32,21 +33,55 @@ class InterpolationApp:
 
         self.finite_diff_window = tk.Toplevel(self.root)
         self.finite_diff_window.title("Diferencias Finitas para Derivadas")
-        self.finite_diff_window.geometry("700x500")
+        self.finite_diff_window.geometry("700x650") # Ajustado para más campos
         self.finite_diff_window.protocol("WM_DELETE_WINDOW", lambda: self._close_window_generic(self.finite_diff_window, 'finite_diff_window'))
 
-        # Contenido de la ventana de Diferencias Finitas
-        ttk.Label(self.finite_diff_window, text="Valores de x (separados por comas):").pack(pady=(10,0))
-        self.fd_x_entries = ttk.Entry(self.finite_diff_window, width=80)
-        self.fd_x_entries.pack(pady=5, padx=10)
-        self.fd_x_entries.insert(0, "1, 2, 3, 4, 5") # Ejemplo
+        # --- Entradas para el rango de x ---
+        input_frame_x_range = ttk.Frame(self.finite_diff_window)
+        input_frame_x_range.pack(pady=(10,0), padx=10, fill='x')
 
-        ttk.Label(self.finite_diff_window, text="Valores de y (f(x), separados por comas):").pack(pady=(10,0))
+        ttk.Label(input_frame_x_range, text="Valor Inicial de x (x₀):").grid(row=0, column=0, padx=5, pady=2, sticky='w')
+        self.fd_x_initial_entry = ttk.Entry(input_frame_x_range, width=15)
+        self.fd_x_initial_entry.grid(row=0, column=1, padx=5, pady=2, sticky='w')
+        self.fd_x_initial_entry.insert(0, "1")
+
+        ttk.Label(input_frame_x_range, text="Valor Final de x (x₁):").grid(row=0, column=2, padx=5, pady=2, sticky='w')
+        self.fd_x_final_entry = ttk.Entry(input_frame_x_range, width=15)
+        self.fd_x_final_entry.grid(row=0, column=3, padx=5, pady=2, sticky='w')
+        self.fd_x_final_entry.insert(0, "5")
+
+        ttk.Label(input_frame_x_range, text="Paso Actual (h):").grid(row=0, column=4, padx=5, pady=2, sticky='w')
+        self.fd_h_entry = ttk.Entry(input_frame_x_range, width=15)
+        self.fd_h_entry.grid(row=0, column=5, padx=5, pady=2, sticky='w')
+        self.fd_h_entry.insert(0, "1")
+        
+        # --- Entrada para los valores de y (datos originales) ---
+        ttk.Label(self.finite_diff_window, text="Valores de y (f(x) originales, separados por comas):").pack(pady=(10,0))
         self.fd_y_entries = ttk.Entry(self.finite_diff_window, width=80)
         self.fd_y_entries.pack(pady=5, padx=10)
         self.fd_y_entries.insert(0, "1, 4, 9, 16, 25") # Ejemplo y=x^2
 
-        btn_calculate_fd = ttk.Button(self.finite_diff_window, text="Calcular Derivadas", command=self.solve_finite_differences)
+        # --- Sección de Remuestreo ---
+        ttk.Separator(self.finite_diff_window, orient='horizontal').pack(fill='x', pady=10, padx=10)
+
+        resample_frame = ttk.Frame(self.finite_diff_window)
+        resample_frame.pack(pady=(5,0), padx=10, fill='x')
+        
+        ttk.Label(resample_frame, text="Nuevo Paso (h') para Remuestreo:").grid(row=0, column=0, padx=5, pady=2, sticky='w')
+        self.fd_h_new_entry = ttk.Entry(resample_frame, width=15)
+        self.fd_h_new_entry.grid(row=0, column=1, padx=5, pady=2, sticky='w')
+        self.fd_h_new_entry.insert(0, "0.5") # Ejemplo
+
+        btn_resample = ttk.Button(resample_frame, text="Remuestrear Datos y Actualizar Campos", command=self.resample_and_update_fd_inputs)
+        btn_resample.grid(row=0, column=2, padx=10, pady=5, sticky='e')
+        
+        resample_frame.columnconfigure(2, weight=1) # Para que el botón se alinee a la derecha
+
+        ttk.Separator(self.finite_diff_window, orient='horizontal').pack(fill='x', pady=10, padx=10)
+        # --- Fin Sección de Remuestreo ---
+
+
+        btn_calculate_fd = ttk.Button(self.finite_diff_window, text="Calcular Derivadas (con datos actuales/remuestreados)", command=self.solve_finite_differences)
         btn_calculate_fd.pack(pady=10)
 
         ttk.Label(self.finite_diff_window, text="Resultados:").pack(pady=(10,0))
@@ -54,29 +89,143 @@ class InterpolationApp:
         self.fd_results_text.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
         self.fd_results_text.config(state=tk.DISABLED)
 
+    def resample_and_update_fd_inputs(self):
+        self.fd_results_text.config(state=tk.NORMAL)
+        self.fd_results_text.delete(1.0, tk.END)
+        try:
+            # 1. Obtener datos originales de la GUI
+            x_initial_str = self.fd_x_initial_entry.get()
+            x_final_str = self.fd_x_final_entry.get()
+            h_current_str = self.fd_h_entry.get() # Paso actual de los datos y
+            y_original_str_list = self.fd_y_entries.get().split(',')
+            h_new_str = self.fd_h_new_entry.get()
+
+            if not all([x_initial_str, x_final_str, h_current_str, self.fd_y_entries.get(), h_new_str]):
+                raise ValueError("Todos los campos para el remuestreo deben estar completos (x₀, x₁, h actual, y originales, h nuevo).")
+
+            x_initial = float(x_initial_str)
+            x_final = float(x_final_str)
+            h_current = float(h_current_str)
+            h_new = float(h_new_str)
+
+            if h_current <= 0:
+                raise ValueError("El 'Paso Actual (h)' debe ser positivo.")
+            if h_new <= 0:
+                raise ValueError("El 'Nuevo Paso (h') para Remuestreo' debe ser positivo.")
+            if x_initial > x_final: # Esta validación ya existe en solve_finite_differences pero es bueno tenerla aquí
+                 raise ValueError("El 'Valor Inicial de x' no puede ser mayor que el 'Valor Final de x'.")
+
+            # 2. Generar x_original_vals basados en los parámetros de x y el h_current
+            # Esta lógica es similar a la de solve_finite_differences para generar los x que corresponden a los y entrados
+            if x_initial == x_final and h_current > 0: # Un solo punto, si h_current se da como positivo, es ambiguo.
+                 num_points_orig = 1
+            elif x_initial == x_final: # Un solo punto
+                 num_points_orig = 1
+            else:
+                num_points_orig = int(round((x_final - x_initial) / h_current)) + 1
+            
+            x_original_vals = np.linspace(x_initial, x_final, num_points_orig)
+            
+            if len(x_original_vals) != len(y_original_str_list):
+                raise ValueError(f"La cantidad de 'Valores de y originales' ({len(y_original_str_list)}) no coincide con "
+                                 f"la cantidad de puntos x generados por x₀, x₁ y 'Paso Actual (h)' ({len(x_original_vals)}).")
+
+            y_original_vals = np.array([float(val.strip()) for val in y_original_str_list])
+
+            if len(x_original_vals) < 2 : # Newton necesita al menos 2 puntos para un polinomio de grado 1.
+                                        # O 1 punto si solo se quiere "evaluar" en ese mismo punto.
+                                        # El backend de Newton maneja la cantidad de puntos, pero una verificación temprana es útil.
+                raise ValueError("Se necesitan al menos dos puntos originales (x,y) para la interpolación de remuestreo.")
+
+
+            # 3. Llamar al backend de re-muestreo
+            # El rango para los nuevos puntos x será el mismo x_initial y x_final
+            self.fd_results_text.insert(tk.END, f"Remuestreando datos con h'={h_new} en el rango [{x_initial}, {x_final}]...\\n")
+            
+            x_resampled, y_resampled = data_resampling.resample_data_newton(
+                x_original_vals, 
+                y_original_vals,
+                x_initial, # x_target_start
+                x_final,   # x_target_end
+                h_new
+            )
+
+            # 4. Actualizar los campos de la GUI
+            self.fd_x_initial_entry.delete(0, tk.END)
+            self.fd_x_initial_entry.insert(0, f"{x_resampled[0]:.10g}") # Usar .10g para buena precisión
+
+            self.fd_x_final_entry.delete(0, tk.END)
+            self.fd_x_final_entry.insert(0, f"{x_resampled[-1]:.10g}")
+
+            self.fd_h_entry.delete(0, tk.END)
+            # Calcular el h real de los datos remuestreados si hay más de un punto
+            actual_new_h = h_new
+            if len(x_resampled) > 1:
+                actual_new_h = x_resampled[1] - x_resampled[0]
+            self.fd_h_entry.insert(0, f"{actual_new_h:.10g}")
+
+
+            y_resampled_str = ", ".join([f"{yval:.10g}" for yval in y_resampled])
+            self.fd_y_entries.delete(0, tk.END)
+            self.fd_y_entries.insert(0, y_resampled_str)
+
+            self.fd_results_text.insert(tk.END, "¡Campos actualizados con los datos remuestreados!\\n")
+            self.fd_results_text.insert(tk.END, f"  Nuevos x generados ({len(x_resampled)} puntos): de {x_resampled[0]:.4f} a {x_resampled[-1]:.4f} con paso aprox. {actual_new_h:.4f}\\n")
+            self.fd_results_text.insert(tk.END, "  Nuevos y generados (primeros 5): " + ", ".join([f"{y:.4f}" for y in y_resampled[:5]]) + ("..." if len(y_resampled) > 5 else "") + "\\n")
+            self.fd_results_text.insert(tk.END, "Ahora puede presionar 'Calcular Derivadas'.\\n")
+
+        except ValueError as ve:
+            self.fd_results_text.insert(tk.END, f"Error de valor: {str(ve)}\\n")
+        except Exception as e:
+            self.fd_results_text.insert(tk.END, f"Ocurrió un error inesperado durante el remuestreo: {str(e)}\\n")
+        finally:
+            self.fd_results_text.config(state=tk.DISABLED)
+
     def solve_finite_differences(self):
         self.fd_results_text.config(state=tk.NORMAL)
         self.fd_results_text.delete(1.0, tk.END)
         try:
-            x_str = self.fd_x_entries.get().split(',')
-            y_str = self.fd_y_entries.get().split(',')
+            x_initial_str = self.fd_x_initial_entry.get()
+            x_final_str = self.fd_x_final_entry.get()
+            h_str = self.fd_h_entry.get()
+            y_str_list = self.fd_y_entries.get().split(',')
+
+            if not all([x_initial_str, x_final_str, h_str]):
+                raise ValueError("Los campos de 'Valor Inicial de x', 'Valor Final de x' y 'Paso (h)' no pueden estar vacíos.")
+
+            x_initial = float(x_initial_str)
+            x_final = float(x_final_str)
+            h = float(h_str)
+
+            if h <= 0:
+                raise ValueError("El paso (h) debe ser un número positivo.")
+            if x_initial > x_final:
+                raise ValueError("El 'Valor Inicial de x' no puede ser mayor que el 'Valor Final de x'.")
             
-            if len(x_str) != len(y_str):
-                raise ValueError("Las listas de x e y deben tener la misma cantidad de elementos.")
-            if len(x_str) < 2:
-                raise ValueError("Se necesitan al menos dos puntos para calcular diferencias.")
+            # Generar los valores de x usando np.arange.
+            # np.arange puede tener problemas de precisión con flotantes para el punto final.
+            # Una forma más robusta es calcular el número de puntos.
+            num_points = int(round((x_final - x_initial) / h)) + 1
+            x_vals = np.linspace(x_initial, x_final, num_points)
+            
+            if len(x_vals) != len(y_str_list):
+                raise ValueError(f"La cantidad de valores 'y' ({len(y_str_list)}) no coincide con la cantidad de puntos 'x' generados ({len(x_vals)}) para el rango y paso especificados.")
+            
+            y_vals = np.array([float(val.strip()) for val in y_str_list])
 
-            x_vals = np.array([float(val.strip()) for val in x_str])
-            y_vals = np.array([float(val.strip()) for val in y_str])
+            if len(x_vals) < 2:
+                raise ValueError("Se necesitan al menos dos puntos (generados por el rango y paso) para calcular diferencias.")
 
-            if not finite_differences.is_spacing_equal(x_vals):
-                self.fd_results_text.insert(tk.END, "Error: Los valores de x deben estar igualmente espaciados para este método.\n")
-                self.fd_results_text.config(state=tk.DISABLED)
-                return
+            # La comprobación is_spacing_equal puede ser redundante si generamos x_vals con un paso constante h,
+            # pero el backend podría depender de ello o realizar sus propias comprobaciones de 'h'.
+            # Por ahora, lo dejamos, pero podría ser un punto a revisar si el backend se adapta.
+            if not finite_differences.is_spacing_equal(x_vals, tolerance=1e-9): # Añadimos una tolerancia
+                self.fd_results_text.insert(tk.END, "Advertencia: Los valores de x generados no parecen estar perfectamente espaciados según la función de comprobación. Esto podría ser un problema de precisión o del backend.\\n")
+                # Considerar si detener o continuar. Por ahora, continuamos.
 
             resultados = finite_differences.numerical_derivatives_with_formulas(x_vals, y_vals)
             
-            output = "Aproximaciones de Derivadas:\n\n"
+            output = "Aproximaciones de Derivadas:\\n"
             for r in resultados:
                 output += f"Punto x = {r['x']}\n"
                 if r.get('sucesiva'):

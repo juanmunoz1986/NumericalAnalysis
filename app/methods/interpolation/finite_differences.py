@@ -29,12 +29,12 @@ Limitación:
 
 import numpy as np
 
-def is_spacing_equal(x_vals):
+def is_spacing_equal(x_vals, tolerance=1e-9):
     """Verifica si los valores en el array x_vals están igualmente espaciados."""
     if len(x_vals) < 2:
         return True # Consideramos un solo punto o ninguno como espaciado igual
     diffs = np.diff(x_vals)
-    return np.all(np.isclose(diffs, diffs[0]))
+    return np.all(np.isclose(diffs, diffs[0], atol=tolerance))
 
 def numerical_derivatives_with_formulas(x_vals, y_vals):
     """

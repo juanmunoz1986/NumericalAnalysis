@@ -1,7 +1,7 @@
-from app.gui import main as main_window
+from app.gui import app
 import tkinter as tk
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = main_window.App(root)
+    application = app.App(root)
     root.mainloop()

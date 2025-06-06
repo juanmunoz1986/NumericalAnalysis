@@ -147,7 +147,7 @@ if __name__ == '__main__':
                 if isinstance(val, (float, np.float_)) and val != "":
                     row_str += f"{val:^12.4f} | "
                 else:
-                    row_str += f"{"":^12} | " 
+                    row_str += f"{'':^12} | " 
             print(row_str.strip().strip('|').strip())
         print("")
 

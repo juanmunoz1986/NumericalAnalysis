@@ -1,5 +1,11 @@
 import numpy as np
-# sys ya no es necesario aquí, los errores/estados se retornan
+
+"""Módulo de métodos iterativos para sistemas lineales.
+
+A pesar del nombre del archivo, aquí se implementa el método Gauss-Seidel/SOR y
+no un esquema de Newton-Raphson. Se conserva el nombre por compatibilidad con el
+resto de la aplicación.
+"""
 
 def resolver_sistema_sor(A_np, b_np, w_factor, tol, max_iter, x_inicial_np=None):
     """

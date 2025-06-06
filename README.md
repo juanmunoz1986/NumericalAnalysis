@@ -83,6 +83,11 @@ E:.
    * Resuelve el mismo sistema usando LU, Jacobi y Gauss-Seidel/SOR.
    * Visualiza resultados y, si es posible (2x2 o 3x3), grafica las soluciones.
 
+6. **Interpolación y Derivación**
+
+   * Calcula el polinomio de interpolación de Newton para un conjunto de puntos.
+   * Aproxima derivadas usando diferencias finitas cuando el espaciado es constante.
+
 ---
 
 ## 🖥️ Requisitos
@@ -97,7 +102,7 @@ E:.
 Instalación rápida:
 
 ```bash
-pip install numpy matplotlib
+pip install -r requirements
 ```
 
 ---
@@ -115,7 +120,7 @@ pip install numpy matplotlib
 3. Abre una terminal o CMD, navega a la carpeta del proyecto y ejecuta:
 
    ```bash
-   python app.py
+   python main.py
    ```
 
 4. Se abrirá una ventana gráfica donde podrás seleccionar y utilizar los métodos numéricos.

@@ -88,25 +88,23 @@ def evaluate_newton_polynomial(x, coef, x_eval):
         result = result * (x_eval - x[i]) + coef[i]
     return result
 
-# Datos de entrada (puedes modificar estos valores)
-x = np.array([0, 0.5, 1, 1.5, 2])
-y = np.array([0, 2.5, 5.8, 8.5, 10.2])
+if __name__ == "__main__":
+    # Ejemplo de uso
+    x = np.array([0, 0.5, 1, 1.5, 2])
+    y = np.array([0, 2.5, 5.8, 8.5, 10.2])
 
-# Construir tabla de diferencias divididas
-value_table, formula_table = build_divided_difference_table(x, y)
+    value_table, formula_table = build_divided_difference_table(x, y)
 
-print("Divided Difference Table - VALUES:")
-print_divided_difference_table(value_table)
+    print("Divided Difference Table - VALUES:")
+    print_divided_difference_table(value_table)
 
-print("Divided Difference Table - FORMULAS:")
-print_divided_difference_table(formula_table)
+    print("Divided Difference Table - FORMULAS:")
+    print_divided_difference_table(formula_table)
 
-# Obtener los coeficientes del polinomio
-coefficients = get_newton_coefficients(value_table)
-print("\nNewton Polynomial Coefficients:")
-print(np.array(coefficients))
+    coefficients = get_newton_coefficients(value_table)
+    print("\nNewton Polynomial Coefficients:")
+    print(np.array(coefficients))
 
-# Evaluar el polinomio para un valor dado de x
-x_value = 5
-y_value = evaluate_newton_polynomial(x, coefficients, x_value)
-print(f"\nInterpolación en x = {x_value}: y = {y_value:.4f}")
+    x_value = 5
+    y_value = evaluate_newton_polynomial(x, coefficients, x_value)
+    print(f"\nInterpolación en x = {x_value}: y = {y_value:.4f}")

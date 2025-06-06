@@ -97,7 +97,7 @@ E:.
 Instalación rápida:
 
 ```bash
-pip install numpy matplotlib
+pip install -r requirements
 ```
 
 ---
@@ -115,7 +115,7 @@ pip install numpy matplotlib
 3. Abre una terminal o CMD, navega a la carpeta del proyecto y ejecuta:
 
    ```bash
-   python app.py
+   python main.py
    ```
 
 4. Se abrirá una ventana gráfica donde podrás seleccionar y utilizar los métodos numéricos.

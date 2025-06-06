@@ -83,6 +83,11 @@ E:.
    * Resuelve el mismo sistema usando LU, Jacobi y Gauss-Seidel/SOR.
    * Visualiza resultados y, si es posible (2x2 o 3x3), grafica las soluciones.
 
+6. **Interpolación y Derivación**
+
+   * Calcula el polinomio de interpolación de Newton para un conjunto de puntos.
+   * Aproxima derivadas usando diferencias finitas cuando el espaciado es constante.
+
 ---
 
 ## 🖥️ Requisitos

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # , NavigationToolbar2Tk
 from app.methods.root_finding import lu_factorization_with_pivot as lu_with_pivot, interactive_jacboi as jacobi_iter, \
     newton_raphson_no_line_relaxation as newton_classic, newton_raphson_with_relaxation as newton_relaxed
+from app.methods.interpolation import finite_differences, newton_divided_differences
 
 
 class App:
@@ -34,6 +35,9 @@ class App:
 
         btn_compare = ttk.Button(self.root, text="Comparar Métodos Lineales", command=self.open_compare_linear_window)
         btn_compare.pack(pady=10, fill='x', padx=50)
+
+        btn_inter_deriv = ttk.Button(self.root, text="Interpolación / Derivación", command=self.open_inter_deriv_window)
+        btn_inter_deriv.pack(pady=5, fill='x', padx=50)
 
         self.lu_matrix_size = 0  # Para almacenar el tamaño actual de la matriz LU
         self.entries_A = []
@@ -83,6 +87,13 @@ class App:
         # Nuevo para graficación
         self.compare_plot_frame = None
         self.compare_plot_canvas = None  # Para mantener referencia al canvas
+
+        # Atributos para interpolación/derivación
+        self.inter_deriv_window = None
+        self.entry_interp_x = None
+        self.entry_interp_y = None
+        self.entry_interp_eval = None
+        self.results_inter_deriv_text = None
 
     def open_lu_window(self):
         if self.lu_window and self.lu_window.winfo_exists():
@@ -1282,6 +1293,87 @@ class App:
         except Exception as e:
             ttk.Label(target_frame, text=f"Error al generar gráfico 3D: {e}").pack(padx=10, pady=10)
             plt.close(fig)
+
+    def open_inter_deriv_window(self):
+        if self.inter_deriv_window and self.inter_deriv_window.winfo_exists():
+            self.inter_deriv_window.lift(); return
+
+        self.inter_deriv_window = tk.Toplevel(self.root)
+        self.inter_deriv_window.title("Interpolación y Derivación")
+        self.inter_deriv_window.geometry("650x600")
+        self.inter_deriv_window.protocol(
+            "WM_DELETE_WINDOW",
+            lambda: self._close_window_generic(self.inter_deriv_window, 'inter_deriv_window'))
+
+        data_frame = ttk.Frame(self.inter_deriv_window)
+        data_frame.pack(pady=10, fill='x')
+
+        ttk.Label(data_frame, text="Valores x (separados por coma):").pack(anchor='w', padx=5)
+        self.entry_interp_x = ttk.Entry(data_frame)
+        self.entry_interp_x.pack(fill='x', padx=5)
+
+        ttk.Label(data_frame, text="Valores y (separados por coma):").pack(anchor='w', padx=5)
+        self.entry_interp_y = ttk.Entry(data_frame)
+        self.entry_interp_y.pack(fill='x', padx=5)
+
+        ttk.Label(data_frame, text="Evaluar polinomio en x =").pack(anchor='w', padx=5, pady=(10,0))
+        self.entry_interp_eval = ttk.Entry(data_frame)
+        self.entry_interp_eval.pack(fill='x', padx=5)
+        self.entry_interp_eval.insert(0, "0.0")
+
+        ttk.Button(self.inter_deriv_window, text="Calcular", command=self.calculate_inter_deriv).pack(pady=10)
+
+        ttk.Label(self.inter_deriv_window, text="Resultados:").pack()
+        self.results_inter_deriv_text = tk.Text(self.inter_deriv_window, height=20, width=80, wrap=tk.WORD)
+        self.results_inter_deriv_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.results_inter_deriv_text.config(state=tk.DISABLED)
+
+    def calculate_inter_deriv(self):
+        if not self.inter_deriv_window or not self.inter_deriv_window.winfo_exists():
+            return
+
+        self._clear_text_widget(self.results_inter_deriv_text)
+
+        try:
+            x_vals = [float(v) for v in self.entry_interp_x.get().replace(',', ' ').split()]
+            y_vals = [float(v) for v in self.entry_interp_y.get().replace(',', ' ').split()]
+            if len(x_vals) != len(y_vals):
+                raise ValueError("Las listas x e y deben tener la misma longitud")
+
+            x_np = np.array(x_vals, dtype=float)
+            y_np = np.array(y_vals, dtype=float)
+
+            # Interpolación de Newton
+            table, _ = newton_divided_differences.build_divided_difference_table(x_np, y_np)
+            coef = newton_divided_differences.get_newton_coefficients(table)
+            x_eval = float(self.entry_interp_eval.get())
+            interp_val = newton_divided_differences.evaluate_newton_polynomial(x_np, coef, x_eval)
+
+            # Derivación por diferencias finitas
+            if finite_differences.is_spacing_equal(x_np):
+                deriv_results = finite_differences.numerical_derivatives_with_formulas(x_np, y_np)
+                deriv_lines = []
+                for r in deriv_results:
+                    if r['central']:
+                        deriv_lines.append(f"x={r['x']}: {r['central'][1]:.6f}")
+                    elif r['sucesiva']:
+                        deriv_lines.append(f"x={r['x']}: {r['sucesiva'][1]:.6f}")
+                    elif r['regresiva']:
+                        deriv_lines.append(f"x={r['x']}: {r['regresiva'][1]:.6f}")
+                deriv_text = "\n".join(deriv_lines)
+            else:
+                deriv_text = "Error: para derivación, los valores de x deben tener espaciado constante."
+
+            result_text = (
+                f"Interpolación en x = {x_eval}: {interp_val:.6f}\n\n" +
+                "Derivadas aproximadas:\n" + deriv_text
+            )
+        except Exception as e:
+            result_text = f"Error: {e}"
+
+        self.results_inter_deriv_text.config(state=tk.NORMAL)
+        self.results_inter_deriv_text.insert(1.0, result_text)
+        self.results_inter_deriv_text.config(state=tk.DISABLED)
 
     # --- Funciones auxiliares GUI (existentes) ---
     def _show_error_in_text(self, text_widget, message):

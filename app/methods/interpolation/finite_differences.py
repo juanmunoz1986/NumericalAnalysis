@@ -30,10 +30,6 @@ Limitación:
 
 import numpy as np
 
-# Datos de entrada
-x = np.array([1, 2, 3, 4, 5], dtype=float)
-y = np.array([1, 4, 9, 16, 25], dtype=float)  # f(x) = x^2
-
 # Verificar espaciado uniforme
 def is_spacing_equal(x):
     diffs = np.diff(x)
@@ -98,23 +94,27 @@ def numerical_derivatives_with_formulas(x, y):
 
     return results
 
-# Mostrar resultados
-if is_spacing_equal(x):
-    resultados = numerical_derivatives_with_formulas(x, y)
-    for r in resultados:
-        print(f"x = {r['x']:.1f}")
-        if r['sucesiva']:
-            print("  Sucesiva:")
-            print(f"    Fórmula:  {r['sucesiva'][0]}")
-            print(f"    Resultado: {r['sucesiva'][1]}")
-        if r['central']:
-            print("  Central:")
-            print(f"    Fórmula:  {r['central'][0]}")
-            print(f"    Resultado: {r['central'][1]}")
-        if r['regresiva']:
-            print("  Regresiva:")
-            print(f"    Fórmula:  {r['regresiva'][0]}")
-            print(f"    Resultado: {r['regresiva'][1]}")
-        print()
-else:
-    print("Los valores de x no están igualmente espaciados.")
+if __name__ == "__main__":
+    # Ejemplo de uso
+    x = np.array([1, 2, 3, 4, 5], dtype=float)
+    y = np.array([1, 4, 9, 16, 25], dtype=float)  # f(x) = x^2
+
+    if is_spacing_equal(x):
+        resultados = numerical_derivatives_with_formulas(x, y)
+        for r in resultados:
+            print(f"x = {r['x']:.1f}")
+            if r['sucesiva']:
+                print("  Sucesiva:")
+                print(f"    Fórmula:  {r['sucesiva'][0]}")
+                print(f"    Resultado: {r['sucesiva'][1]}")
+            if r['central']:
+                print("  Central:")
+                print(f"    Fórmula:  {r['central'][0]}")
+                print(f"    Resultado: {r['central'][1]}")
+            if r['regresiva']:
+                print("  Regresiva:")
+                print(f"    Fórmula:  {r['regresiva'][0]}")
+                print(f"    Resultado: {r['regresiva'][1]}")
+            print()
+    else:
+        print("Los valores de x no están igualmente espaciados.")

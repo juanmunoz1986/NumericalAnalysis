@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 # Importaciones relativas a la GUI principal y de interpolación
 # ya que selector_gui.py está ahora en app/gui/windows/
-from .main import RootFindingApp
+from .app import RootFindingApp
 from .interpolation_gui import InterpolationApp
 
 class MainAppSelector:

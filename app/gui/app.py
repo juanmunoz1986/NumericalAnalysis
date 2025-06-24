@@ -7,17 +7,17 @@ from app.methods.root_finding import lu_factorization_with_pivot as lu_with_pivo
     newton_raphson_no_line_relaxation as newton_classic, newton_raphson_with_relaxation as newton_relaxed
 
 
-class App:
+class RootFindingApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Proyecto de Métodos Numéricos")
-        self.root.geometry("450x420")  # Más alto para el nuevo botón
+        self.root.title("Proyecto de Métodos Numéricos - Búsqueda de Raíces")
+        self.root.geometry("450x420")
 
         title_label = ttk.Label(self.root, text="Seleccione un Método Numérico", font=("Arial", 16))
         title_label.pack(pady=15)
 
         btn_lu = ttk.Button(self.root, text="Factorización LU (Sistemas Lineales)", command=self.open_lu_window)
-        btn_lu.pack(pady=5, fill='x', padx=50)  # Menos pady
+        btn_lu.pack(pady=5, fill='x', padx=50)
 
         btn_sor = ttk.Button(self.root, text="Gauss-Seidel / SOR (Sist. Lineales)", command=self.open_sor_window)
         btn_sor.pack(pady=5, fill='x', padx=50)
@@ -220,7 +220,8 @@ class App:
             if isinstance(resultado, str):
                 self.results_lu_text.insert(tk.END, resultado + "\n")
             else:
-                P, L, U, x = resultado
+                # Corregir el desempaquetado para esperar 5 valores (P, L, U, x, y)
+                P, L, U, x, y = resultado # y es el vector intermedio de Ly = Pb
                 self.results_lu_text.insert(tk.END, "Factorización LU Exitosa:\n\n")
                 self.results_lu_text.insert(tk.END, "Matriz de Permutación P:\n")
                 self.results_lu_text.insert(tk.END, np.array2string(P, precision=4, suppress_small=True) + "\n\n")
@@ -228,7 +229,9 @@ class App:
                 self.results_lu_text.insert(tk.END, np.array2string(L, precision=4, suppress_small=True) + "\n\n")
                 self.results_lu_text.insert(tk.END, "Matriz Triangular Superior U:\n")
                 self.results_lu_text.insert(tk.END, np.array2string(U, precision=4, suppress_small=True) + "\n\n")
-                self.results_lu_text.insert(tk.END, "Vector Solución x:\n")
+                self.results_lu_text.insert(tk.END, "Vector Intermedio y (solución de Ly = Pb):\n")
+                self.results_lu_text.insert(tk.END, np.array2string(y, precision=10, suppress_small=True) + "\n\n")
+                self.results_lu_text.insert(tk.END, "Vector Solución x (solución de Ux = y):\n")
                 self.results_lu_text.insert(tk.END, np.array2string(x, precision=10, suppress_small=True) + "\n")
 
         except ValueError:

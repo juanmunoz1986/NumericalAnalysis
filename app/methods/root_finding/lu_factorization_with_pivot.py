@@ -10,7 +10,7 @@ def resolver_sistema_lu(A_np, b_np):
     b_np (np.array): Vector de términos independientes.
 
     Retorna:
-    tuple: (P, L, U, x) si la solución es exitosa.
+    tuple: (P, L, U, x, y) si la solución es exitosa (P: Permutación, L: Lower, U: Upper, x: Solución, y: Intermedia Ly=Pb).
     str: Mensaje de error si ocurre un problema.
     """
 

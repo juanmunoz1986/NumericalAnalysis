@@ -59,7 +59,7 @@ def resolver_sistema_lu(A_np, b_np):
     return P, L, U, x, y
 
 # El siguiente código es para probar el módulo directamente si se ejecuta este archivo.
-# No se ejecutará cuando se importe desde main.py
+# No se ejecutará cuando se importe desde app.py
 if __name__ == '__main__':
     print("Probando el módulo lu_factorization_with_pivot.py...")
     # Ejemplo de uso:
